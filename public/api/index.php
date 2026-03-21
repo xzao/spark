@@ -29,7 +29,14 @@ function delete(string $file, string $key) {
     respond(200, ['ok' => true, 'key' => $key]);
 }
 
-function keys(): void {
+function read(string $file) {
+    if (!file_exists($file)) {
+        respond(404, ['error' => 'Not found']);
+    }
+    respond(200, file_get_contents($file), 'text/plain; charset=utf-8');
+}
+
+function reads(): void {
     if (!is_dir(SPARKS)) {
         respond(200, ['keys' => []]);
     }
@@ -42,13 +49,6 @@ function keys(): void {
     }
     sort($keys, SORT_NATURAL | SORT_FLAG_CASE);
     respond(200, ['keys' => $keys]);
-}
-
-function read(string $file) {
-    if (!file_exists($file)) {
-        respond(404, ['error' => 'Not found']);
-    }
-    respond(200, file_get_contents($file), 'text/plain; charset=utf-8');
 }
 
 function respond($code, $body, $contentType = 'application/json') {
@@ -77,17 +77,20 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 # set key
 $key = $_GET['key'] ?? null;
-
-# list all spark keys (GET ?list=1)
-if (isset($_GET['list']) && $_GET['list'] === '1') {
-    if ($method !== 'GET') {
-        respond(405, ['error' => 'Method not allowed']);
+if (is_string($key)) {
+    $key = trim($key);
+    if ($key === '') {
+        $key = null;
     }
-    keys();
+}
+
+# list all spark keys: GET with no key
+if ($method === 'GET' && $key === null) {
+    reads();
 }
 
 # check key
-if (!$key || !preg_match('/^[a-zA-Z0-9_\-]+$/', $key)) {
+if ($key === null || !preg_match('/^[a-zA-Z0-9_\-]+$/', $key)) {
     respond(400, ['error' => 'Missing or invalid key']);
 }
 

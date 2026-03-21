@@ -638,7 +638,7 @@
     }
 
     async function loadKeys() {
-        const r = await fetch(apiUrl({ list: '1' }));
+        const r = await fetch(API);
         const data = await r.json().catch(function () { return {}; });
         if (!r.ok) {
             toast(data.error || 'Failed to list sparks', true);
