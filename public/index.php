@@ -6,7 +6,6 @@
     <title>Spark</title>
     <style>
         :root {
-            /* UniFi light — clean surfaces, blue accent, sharp corners */
             --unifi-blue: #006fff;
             --unifi-blue-hover: #0056d6;
             --unifi-blue-dim: rgba(0, 111, 255, 0.1);
@@ -50,6 +49,29 @@
             flex-direction: column;
             height: 100%;
             min-height: 0;
+        }
+
+        /* First visit / hard refresh — ease the shell in (not modals/toasts) */
+        .app.app--boot {
+            opacity: 0;
+            transform: translate3d(0, 10px, 0);
+        }
+        .app.app--boot.app--boot-out {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+            transition:
+                opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .app.app--boot {
+                opacity: 1;
+                transform: none;
+            }
+            .app.app--boot.app--boot-out {
+                transition: none;
+            }
         }
 
         /* UniFi-style top bar (light) */
@@ -203,6 +225,25 @@
             flex: 1;
             overflow-y: auto;
             padding: 0 8px 12px;
+        }
+        /* List fades in after first fetch so keys don’t pop in over a static rail */
+        .sidebar__list.sidebar__list--boot {
+            opacity: 0;
+            transform: translate3d(0, 4px, 0);
+            transition:
+                opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.08s,
+                transform 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.08s;
+        }
+        .sidebar__list.sidebar__list--boot.sidebar__list--ready {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .sidebar__list.sidebar__list--boot {
+                opacity: 1;
+                transform: none;
+                transition: none;
+            }
         }
         .sidebar__item {
             display: flex;
@@ -604,7 +645,7 @@
     </style>
 </head>
 <body>
-    <div class="app">
+    <div class="app app--boot" id="app-root">
         <header class="topbar">
             <div class="topbar__brand">
                 <span class="topbar__logo" aria-hidden="true">
@@ -636,7 +677,7 @@
         <div class="body">
             <aside class="sidebar" aria-label="Sparks list">
                 <div class="sidebar__head">Sparks</div>
-                <div class="sidebar__list" id="spark-list"></div>
+                <div class="sidebar__list sidebar__list--boot" id="spark-list"></div>
                 <div class="sidebar__foot">
                     <button type="button" class="btn btn--secondary" id="btn-new" style="width:100%">+ New spark</button>
                 </div>
@@ -694,6 +735,7 @@
     const KEY_RE = /^[a-zA-Z0-9_\-]+$/;
 
     const el = {
+        app: document.getElementById('app-root'),
         list: document.getElementById('spark-list'),
         editor: document.getElementById('editor'),
         toolbarLabel: document.getElementById('toolbar-label'),
@@ -713,6 +755,35 @@
         modalDeleteConfirm: document.getElementById('modal-delete-confirm'),
         toast: document.getElementById('toast'),
     };
+
+    function revealAppShell() {
+        var app = el.app;
+        if (!app || app.dataset.shellRevealed === '1') {
+            return;
+        }
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            app.classList.remove('app--boot');
+            app.dataset.shellRevealed = '1';
+            return;
+        }
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                app.classList.add('app--boot-out');
+                window.setTimeout(function () {
+                    app.classList.remove('app--boot', 'app--boot-out');
+                    app.dataset.shellRevealed = '1';
+                }, 900);
+            });
+        });
+    }
+
+    function finishSidebarListReveal() {
+        requestAnimationFrame(function () {
+            el.list.classList.add('sidebar__list--ready');
+        });
+    }
+
+    revealAppShell();
 
     let currentKey = null;
     let lastSaved = '';
@@ -864,6 +935,7 @@
         const data = await r.json().catch(function () { return {}; });
         if (!r.ok) {
             toast(data.error || 'Failed to list sparks', true);
+            finishSidebarListReveal();
             return;
         }
         const keys = data.keys || [];
@@ -877,6 +949,7 @@
             row.addEventListener('click', function () { selectKey(key); });
             el.list.appendChild(row);
         });
+        finishSidebarListReveal();
     }
 
     function highlightList() {
