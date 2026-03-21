@@ -178,13 +178,17 @@
             flex-shrink: 0;
         }
         .icon-btn .icon-split,
-        .icon-btn .icon-swap {
+        .icon-btn .icon-stack,
+        .icon-btn .icon-dynamic {
             display: none;
         }
-        .icon-btn[aria-pressed="true"] .icon-split {
+        .icon-btn[data-layout-mode="split"] .icon-split {
             display: block;
         }
-        .icon-btn[aria-pressed="false"] .icon-swap {
+        .icon-btn[data-layout-mode="stack"] .icon-stack {
+            display: block;
+        }
+        .icon-btn[data-layout-mode="dynamic"] .icon-dynamic {
             display: block;
         }
 
@@ -617,9 +621,10 @@
             </div>
             <div class="topbar__actions" role="toolbar" aria-label="Document actions">
                 <div class="action-group">
-                    <button type="button" class="icon-btn" id="btn-layout" title="Stack editor above preview" aria-label="Toggle editor layout" aria-pressed="true">
+                    <button type="button" class="icon-btn" id="btn-layout" data-layout-mode="dynamic" title="Layout: Dynamic (responsive). Click to change." aria-label="Layout: Dynamic. Cycles dynamic, side by side, stacked.">
                         <svg class="icon-split" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="8" height="16" rx="0"/><rect x="13" y="4" width="8" height="16" rx="0"/></svg>
-                        <svg class="icon-swap" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="8" rx="0"/><rect x="4" y="13" width="16" height="8" rx="0"/></svg>
+                        <svg class="icon-stack" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="8" rx="0"/><rect x="4" y="13" width="16" height="8" rx="0"/></svg>
+                        <svg class="icon-dynamic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M8 20H4v-4M16 20h4v-4"/></svg>
                     </button>
                     <span class="action-group__sep" aria-hidden="true"></span>
                     <button type="button" class="icon-btn" id="btn-reload" title="Reload from disk" aria-label="Reload from disk">
@@ -732,6 +737,10 @@
     let previewTimer = null;
 
     const LAYOUT_STORAGE = 'sparkLayout';
+    var LAYOUT_DYNAMIC = 'dynamic';
+    var LAYOUT_SPLIT = 'split';
+    var LAYOUT_STACK = 'stack';
+    var LAYOUT_BREAKPOINT_PX = 1000;
 
     function getStoredLayout() {
         try {
@@ -747,30 +756,83 @@
         } catch (e) {}
     }
 
+    function ensureLayoutDefault() {
+        var s = getStoredLayout();
+        if (s === null || s === '') {
+            setStoredLayout(LAYOUT_DYNAMIC);
+            return;
+        }
+        var norm = normalizeLayoutMode(s);
+        if (norm !== s) {
+            setStoredLayout(norm);
+        }
+    }
+
+    function normalizeLayoutMode(raw) {
+        if (raw === LAYOUT_SPLIT || raw === LAYOUT_STACK || raw === LAYOUT_DYNAMIC) {
+            return raw;
+        }
+        return LAYOUT_DYNAMIC;
+    }
+
+    function getLayoutMode() {
+        return normalizeLayoutMode(getStoredLayout());
+    }
+
+    function resolveEffectiveStack() {
+        var mode = getLayoutMode();
+        if (mode === LAYOUT_STACK) {
+            return true;
+        }
+        if (mode === LAYOUT_SPLIT) {
+            return false;
+        }
+        return window.innerWidth < LAYOUT_BREAKPOINT_PX;
+    }
+
     function applyLayout() {
-        var isStack = getStoredLayout() === 'stack';
+        var mode = getLayoutMode();
+        var isStack = resolveEffectiveStack();
         el.workspace.classList.toggle('layout-row', !isStack);
         el.workspace.classList.toggle('layout-col', isStack);
         el.gutter.classList.remove('gutter--row', 'gutter--col');
         el.gutter.classList.add(isStack ? 'gutter--col' : 'gutter--row');
         el.gutter.setAttribute('aria-orientation', isStack ? 'horizontal' : 'vertical');
-        el.btnLayout.setAttribute('aria-pressed', isStack ? 'false' : 'true');
-        el.btnLayout.title = isStack
-            ? 'Side by side — place editor and preview next to each other'
-            : 'Stacked — editor above preview';
-        el.btnLayout.setAttribute('aria-label', isStack
-            ? 'Layout: stacked. Switch to side by side.'
-            : 'Layout: side by side. Switch to stacked.');
+        el.btnLayout.setAttribute('data-layout-mode', mode);
+
+        var order = [LAYOUT_DYNAMIC, LAYOUT_SPLIT, LAYOUT_STACK];
+        var nextMode = order[(order.indexOf(mode) + 1) % order.length];
+        var nextName = nextMode === LAYOUT_DYNAMIC ? 'Dynamic' : (nextMode === LAYOUT_SPLIT ? 'Side by side' : 'Stacked');
+
+        if (mode === LAYOUT_DYNAMIC) {
+            el.btnLayout.title = 'Layout: Dynamic — stacks when window is under ' + LAYOUT_BREAKPOINT_PX + 'px wide. Next: ' + nextName + '.';
+            el.btnLayout.setAttribute('aria-label', 'Layout mode Dynamic, responsive below ' + LAYOUT_BREAKPOINT_PX + ' pixels. Click for next: ' + nextName + '.');
+        } else if (mode === LAYOUT_SPLIT) {
+            el.btnLayout.title = 'Layout: Side by side. Next: ' + nextName + '.';
+            el.btnLayout.setAttribute('aria-label', 'Layout side by side. Click for next: ' + nextName + '.');
+        } else {
+            el.btnLayout.title = 'Layout: Stacked (editor above preview). Next: ' + nextName + '.';
+            el.btnLayout.setAttribute('aria-label', 'Layout stacked. Click for next: ' + nextName + '.');
+        }
     }
 
-    function toggleLayout() {
-        var isStack = el.workspace.classList.contains('layout-col');
-        setStoredLayout(isStack ? 'split' : 'stack');
+    function cycleLayout() {
+        var order = [LAYOUT_DYNAMIC, LAYOUT_SPLIT, LAYOUT_STACK];
+        var cur = getLayoutMode();
+        var i = order.indexOf(cur);
+        if (i < 0) {
+            i = 0;
+        }
+        setStoredLayout(order[(i + 1) % order.length]);
         applyLayout();
         var ep = el.workspace.querySelector('.pane--editor');
         var pp = el.workspace.querySelector('.pane--preview');
-        if (ep) ep.style.flex = '';
-        if (pp) pp.style.flex = '';
+        if (ep) {
+            ep.style.flex = '';
+        }
+        if (pp) {
+            pp.style.flex = '';
+        }
     }
 
     function apiUrl(params) {
@@ -988,7 +1050,7 @@
         setDirty(el.editor.value !== lastSaved);
     });
 
-    el.btnLayout.addEventListener('click', toggleLayout);
+    el.btnLayout.addEventListener('click', cycleLayout);
     el.btnSave.addEventListener('click', save);
     el.btnReload.addEventListener('click', function () {
         if (!currentKey) return;
@@ -1078,6 +1140,16 @@
         });
     })();
 
+    var layoutResizeTimer;
+    window.addEventListener('resize', function () {
+        if (getLayoutMode() !== LAYOUT_DYNAMIC) {
+            return;
+        }
+        clearTimeout(layoutResizeTimer);
+        layoutResizeTimer = setTimeout(applyLayout, 80);
+    });
+
+    ensureLayoutDefault();
     applyLayout();
     loadKeys();
     updateToolbar();
