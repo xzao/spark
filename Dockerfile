@@ -15,6 +15,13 @@ WORKDIR /opt/spark
 #
 COPY .env   /opt/spark/.env
 COPY public /opt/spark/public
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
+
+#
+#   permission[s]
+#
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 
 #
@@ -31,6 +38,18 @@ RUN printf '%s\n' \
 
 
 #
+#   entrypoint
+#
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+
+
+#
 #   expose
 #
 EXPOSE 80
+
+
+#
+#   command
+#
+CMD ["apache2-foreground"]
