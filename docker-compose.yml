@@ -1,0 +1,12 @@
+services:
+
+  spark:
+    build: .
+    container_name: ${SPARK_CONTAINER_NAME:-spark}    
+    hostname: ${SPARK_HOSTNAME:-spark}    
+    image: ${SPARK_IMAGE:-spark}:${SPARK_VERSION:-latest}
+    ports:
+      - ${SPARK_PORT:-1989}:80
+    restart: unless-stopped
+    volumes:
+      - ${SPARK_VOLUME_ETC_SPARK:-./mnt/etc/spark}:/etc/spark
