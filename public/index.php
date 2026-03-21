@@ -4,9 +4,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Spark — UniFi</title>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
     <style>
         :root {
             /* UniFi light — clean surfaces, blue accent, sharp corners */
@@ -177,20 +174,6 @@
         .icon-btn svg {
             flex-shrink: 0;
         }
-        .icon-btn .icon-split,
-        .icon-btn .icon-stack,
-        .icon-btn .icon-dynamic {
-            display: none;
-        }
-        .icon-btn[data-layout-mode="split"] .icon-split {
-            display: block;
-        }
-        .icon-btn[data-layout-mode="stack"] .icon-stack {
-            display: block;
-        }
-        .icon-btn[data-layout-mode="dynamic"] .icon-dynamic {
-            display: block;
-        }
 
         .body {
             flex: 1;
@@ -321,30 +304,17 @@
         .workspace {
             flex: 1;
             display: flex;
+            flex-direction: column;
             min-height: 0;
             min-width: 0;
-        }
-        .workspace.layout-row {
-            flex-direction: row;
-        }
-        .workspace.layout-col {
-            flex-direction: column;
         }
 
         .pane {
             display: flex;
             flex-direction: column;
+            flex: 1;
             min-width: 0;
             min-height: 0;
-        }
-        .workspace.layout-row .pane--editor,
-        .workspace.layout-row .pane--preview {
-            flex: 1 1 50%;
-        }
-        .workspace.layout-col .pane--editor,
-        .workspace.layout-col .pane--preview {
-            flex: 1 1 50%;
-            min-height: 180px;
         }
 
         .pane__label {
@@ -356,44 +326,6 @@
             color: var(--text-muted);
             background: var(--bg-input);
             border-bottom: 1px solid var(--border-subtle);
-        }
-
-        .gutter {
-            flex-shrink: 0;
-            background: var(--border-subtle);
-            position: relative;
-        }
-        .gutter--row {
-            width: 6px;
-            cursor: col-resize;
-        }
-        .gutter--row::after {
-            content: "";
-            position: absolute;
-            left: 50%;
-            top: 40%;
-            bottom: 40%;
-            width: 2px;
-            margin-left: -1px;
-            background: var(--border-strong);
-        }
-        .gutter--col {
-            width: 100%;
-            height: 6px;
-            cursor: row-resize;
-        }
-        .gutter--col::after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 40%;
-            right: 40%;
-            height: 2px;
-            margin-top: -1px;
-            background: var(--border-strong);
-        }
-        .gutter:hover, .gutter.is-dragging {
-            background: var(--unifi-blue-dim);
         }
 
         #editor {
@@ -411,78 +343,6 @@
             background: var(--bg-input);
             outline: none;
         }
-
-        .preview-scroll {
-            flex: 1;
-            overflow: auto;
-            padding: 16px 20px;
-            background: var(--bg-app);
-        }
-
-        /* Markdown preview — sharp, readable */
-        .preview-md {
-            color: var(--text-secondary);
-            max-width: 720px;
-        }
-        .preview-md h1, .preview-md h2, .preview-md h3 {
-            color: var(--text-primary);
-            font-weight: 600;
-            margin: 1.1em 0 0.45em;
-            line-height: 1.25;
-        }
-        .preview-md h1 { font-size: 1.65rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35em; }
-        .preview-md h2 { font-size: 1.3rem; }
-        .preview-md h3 { font-size: 1.1rem; }
-        .preview-md p { margin: 0.65em 0; }
-        .preview-md a { color: var(--unifi-blue); text-decoration: none; }
-        .preview-md a:hover { text-decoration: underline; }
-        .preview-md code {
-            font-family: var(--font-mono);
-            font-size: 0.9em;
-            background: var(--bg-input);
-            padding: 2px 5px;
-            border-radius: var(--radius);
-            border: 1px solid var(--border-subtle);
-        }
-        .preview-md pre {
-            background: var(--bg-input);
-            border: 1px solid var(--border-strong);
-            border-radius: var(--radius);
-            padding: 12px 14px;
-            overflow-x: auto;
-            margin: 1em 0;
-        }
-        .preview-md pre code {
-            border: none;
-            padding: 0;
-            background: none;
-        }
-        .preview-md ul, .preview-md ol { padding-left: 1.35em; margin: 0.65em 0; }
-        .preview-md blockquote {
-            margin: 0.8em 0;
-            padding: 8px 12px;
-            border-left: 3px solid var(--unifi-blue);
-            background: var(--unifi-blue-dim);
-            color: var(--text-secondary);
-            border-radius: 0;
-        }
-        .preview-md hr {
-            border: none;
-            border-top: 1px solid var(--border-strong);
-            margin: 1.5em 0;
-        }
-        .preview-md table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 1em 0;
-            font-size: 13px;
-        }
-        .preview-md th, .preview-md td {
-            border: 1px solid var(--border-strong);
-            padding: 8px 10px;
-            text-align: left;
-        }
-        .preview-md th { background: var(--bg-elevated); color: var(--text-primary); }
 
         .empty-state {
             flex: 1;
@@ -598,12 +458,6 @@
         }
         .toast--err { border-left-color: var(--danger); }
 
-        @media (max-width: 720px) {
-            .workspace.layout-row .pane--editor,
-            .workspace.layout-row .pane--preview {
-                flex: 1 1 45%;
-            }
-        }
     </style>
 </head>
 <body>
@@ -621,18 +475,14 @@
             </div>
             <div class="topbar__actions" role="toolbar" aria-label="Document actions">
                 <div class="action-group">
-                    <button type="button" class="icon-btn" id="btn-layout" data-layout-mode="dynamic" title="Layout: Dynamic (responsive). Click to change." aria-label="Layout: Dynamic. Cycles dynamic, side by side, stacked.">
-                        <svg class="icon-split" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="8" height="16" rx="0"/><rect x="13" y="4" width="8" height="16" rx="0"/></svg>
-                        <svg class="icon-stack" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="8" rx="0"/><rect x="4" y="13" width="16" height="8" rx="0"/></svg>
-                        <svg class="icon-dynamic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M8 20H4v-4M16 20h4v-4"/></svg>
-                    </button>
-                    <span class="action-group__sep" aria-hidden="true"></span>
                     <button type="button" class="icon-btn" id="btn-reload" title="Reload from disk" aria-label="Reload from disk">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
                     </button>
+                    <span class="action-group__sep" aria-hidden="true"></span>
                     <button type="button" class="icon-btn" id="btn-save" title="Save (Ctrl+S)" aria-label="Save" disabled>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
                     </button>
+                    <span class="action-group__sep" aria-hidden="true"></span>
                     <button type="button" class="icon-btn" id="btn-delete" title="Delete spark" aria-label="Delete spark" disabled>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>
                     </button>
@@ -653,17 +503,10 @@
                     <h2>No spark selected</h2>
                     <p>Choose a spark from the list or create a new one.</p>
                 </div>
-                <div class="workspace layout-row" id="workspace">
+                <div class="workspace" id="workspace">
                     <div class="pane pane--editor">
                         <div class="pane__label">Editor</div>
-                        <textarea id="editor" spellcheck="false" placeholder="# Your spark&#10;&#10;Write markdown here. Preview updates as you type."></textarea>
-                    </div>
-                    <div class="gutter gutter--row" id="gutter" role="separator" aria-orientation="vertical" aria-label="Resize panes"></div>
-                    <div class="pane pane--preview">
-                        <div class="pane__label">Preview</div>
-                        <div class="preview-scroll">
-                            <div class="preview-md" id="preview"></div>
-                        </div>
+                        <textarea id="editor" spellcheck="false" placeholder="Write your spark here…&#10;&#10;Plain text (.spk)."></textarea>
                     </div>
                 </div>
             </main>
@@ -710,16 +553,13 @@
     const el = {
         list: document.getElementById('spark-list'),
         editor: document.getElementById('editor'),
-        preview: document.getElementById('preview'),
         toolbarLabel: document.getElementById('toolbar-label'),
         btnSave: document.getElementById('btn-save'),
         btnDelete: document.getElementById('btn-delete'),
         btnReload: document.getElementById('btn-reload'),
-        btnLayout: document.getElementById('btn-layout'),
         btnNew: document.getElementById('btn-new'),
         workspace: document.getElementById('workspace'),
         workspaceEmpty: document.getElementById('workspace-empty'),
-        gutter: document.getElementById('gutter'),
         modalNew: document.getElementById('modal-new'),
         newKeyInput: document.getElementById('new-key-input'),
         modalNewCancel: document.getElementById('modal-new-cancel'),
@@ -734,106 +574,6 @@
     let currentKey = null;
     let lastSaved = '';
     let dirty = false;
-    let previewTimer = null;
-
-    const LAYOUT_STORAGE = 'sparkLayout';
-    var LAYOUT_DYNAMIC = 'dynamic';
-    var LAYOUT_SPLIT = 'split';
-    var LAYOUT_STACK = 'stack';
-    var LAYOUT_BREAKPOINT_PX = 1000;
-
-    function getStoredLayout() {
-        try {
-            return localStorage.getItem(LAYOUT_STORAGE);
-        } catch (e) {
-            return null;
-        }
-    }
-
-    function setStoredLayout(v) {
-        try {
-            localStorage.setItem(LAYOUT_STORAGE, v);
-        } catch (e) {}
-    }
-
-    function ensureLayoutDefault() {
-        var s = getStoredLayout();
-        if (s === null || s === '') {
-            setStoredLayout(LAYOUT_DYNAMIC);
-            return;
-        }
-        var norm = normalizeLayoutMode(s);
-        if (norm !== s) {
-            setStoredLayout(norm);
-        }
-    }
-
-    function normalizeLayoutMode(raw) {
-        if (raw === LAYOUT_SPLIT || raw === LAYOUT_STACK || raw === LAYOUT_DYNAMIC) {
-            return raw;
-        }
-        return LAYOUT_DYNAMIC;
-    }
-
-    function getLayoutMode() {
-        return normalizeLayoutMode(getStoredLayout());
-    }
-
-    function resolveEffectiveStack() {
-        var mode = getLayoutMode();
-        if (mode === LAYOUT_STACK) {
-            return true;
-        }
-        if (mode === LAYOUT_SPLIT) {
-            return false;
-        }
-        return window.innerWidth < LAYOUT_BREAKPOINT_PX;
-    }
-
-    function applyLayout() {
-        var mode = getLayoutMode();
-        var isStack = resolveEffectiveStack();
-        el.workspace.classList.toggle('layout-row', !isStack);
-        el.workspace.classList.toggle('layout-col', isStack);
-        el.gutter.classList.remove('gutter--row', 'gutter--col');
-        el.gutter.classList.add(isStack ? 'gutter--col' : 'gutter--row');
-        el.gutter.setAttribute('aria-orientation', isStack ? 'horizontal' : 'vertical');
-        el.btnLayout.setAttribute('data-layout-mode', mode);
-
-        var order = [LAYOUT_DYNAMIC, LAYOUT_SPLIT, LAYOUT_STACK];
-        var nextMode = order[(order.indexOf(mode) + 1) % order.length];
-        var nextName = nextMode === LAYOUT_DYNAMIC ? 'Dynamic' : (nextMode === LAYOUT_SPLIT ? 'Side by side' : 'Stacked');
-
-        if (mode === LAYOUT_DYNAMIC) {
-            el.btnLayout.title = 'Layout: Dynamic — stacks when window is under ' + LAYOUT_BREAKPOINT_PX + 'px wide. Next: ' + nextName + '.';
-            el.btnLayout.setAttribute('aria-label', 'Layout mode Dynamic, responsive below ' + LAYOUT_BREAKPOINT_PX + ' pixels. Click for next: ' + nextName + '.');
-        } else if (mode === LAYOUT_SPLIT) {
-            el.btnLayout.title = 'Layout: Side by side. Next: ' + nextName + '.';
-            el.btnLayout.setAttribute('aria-label', 'Layout side by side. Click for next: ' + nextName + '.');
-        } else {
-            el.btnLayout.title = 'Layout: Stacked (editor above preview). Next: ' + nextName + '.';
-            el.btnLayout.setAttribute('aria-label', 'Layout stacked. Click for next: ' + nextName + '.');
-        }
-    }
-
-    function cycleLayout() {
-        var order = [LAYOUT_DYNAMIC, LAYOUT_SPLIT, LAYOUT_STACK];
-        var cur = getLayoutMode();
-        var i = order.indexOf(cur);
-        if (i < 0) {
-            i = 0;
-        }
-        setStoredLayout(order[(i + 1) % order.length]);
-        applyLayout();
-        var ep = el.workspace.querySelector('.pane--editor');
-        var pp = el.workspace.querySelector('.pane--preview');
-        if (ep) {
-            ep.style.flex = '';
-        }
-        if (pp) {
-            pp.style.flex = '';
-        }
-    }
 
     function apiUrl(params) {
         const q = new URLSearchParams(params);
@@ -875,22 +615,6 @@
         });
     }
 
-    function renderPreview(md) {
-        if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
-            el.preview.textContent = md;
-            return;
-        }
-        const raw = marked.parse(md || '', { breaks: true, gfm: true });
-        el.preview.innerHTML = DOMPurify.sanitize(raw);
-    }
-
-    function schedulePreview() {
-        clearTimeout(previewTimer);
-        previewTimer = setTimeout(function () {
-            renderPreview(el.editor.value);
-        }, 120);
-    }
-
     async function loadKeys() {
         const r = await fetch(apiUrl({ list: '1' }));
         const data = await r.json().catch(function () { return {}; });
@@ -930,7 +654,6 @@
 
         if (!key) {
             el.editor.value = '';
-            renderPreview('');
             setDirty(false);
             return;
         }
@@ -938,7 +661,6 @@
         const r = await fetch(apiUrl({ key: key }));
         if (r.status === 404) {
             el.editor.value = '';
-            renderPreview('');
             lastSaved = '';
             setDirty(false);
             toast('Spark not found', true);
@@ -953,7 +675,6 @@
         const text = await r.text();
         el.editor.value = text;
         lastSaved = text;
-        renderPreview(text);
         setDirty(false);
     }
 
@@ -962,7 +683,7 @@
         const body = el.editor.value;
         const r = await fetch(apiUrl({ key: currentKey }), {
             method: 'PUT',
-            headers: { 'Content-Type': 'text/markdown' },
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
             body: body,
         });
         const data = await r.json().catch(function () { return {}; });
@@ -970,7 +691,7 @@
             if (r.status === 404) {
                 const c = await fetch(apiUrl({ key: currentKey }), {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/markdown' },
+                    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
                     body: body,
                 });
                 const cdata = await c.json().catch(function () { return {}; });
@@ -990,11 +711,10 @@
     }
 
     async function createSpark(key) {
-        const initial = '# ' + key.replace(/-/g, ' ') + '\n\n';
         const r = await fetch(apiUrl({ key: key }), {
             method: 'POST',
-            headers: { 'Content-Type': 'text/markdown' },
-            body: initial,
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+            body: '',
         });
         const data = await r.json().catch(function () { return {}; });
         if (!r.ok) {
@@ -1037,7 +757,6 @@
         closeModalDelete();
         currentKey = null;
         el.editor.value = '';
-        renderPreview('');
         setDirty(false);
         updateToolbar();
         highlightList();
@@ -1046,11 +765,9 @@
     }
 
     el.editor.addEventListener('input', function () {
-        schedulePreview();
         setDirty(el.editor.value !== lastSaved);
     });
 
-    el.btnLayout.addEventListener('click', cycleLayout);
     el.btnSave.addEventListener('click', save);
     el.btnReload.addEventListener('click', function () {
         if (!currentKey) return;
@@ -1094,66 +811,8 @@
         }
     });
 
-    /* Pane resize (horizontal split or vertical stack) */
-    (function gutterDrag() {
-        var workspace = el.workspace;
-        var left = workspace.children[0];
-        var right = workspace.children[2];
-        var dragging = false;
-        var startPos, startFirstFr;
-
-        function isStacked() {
-            return workspace.classList.contains('layout-col');
-        }
-
-        el.gutter.addEventListener('mousedown', function (e) {
-            dragging = true;
-            el.gutter.classList.add('is-dragging');
-            var rect = workspace.getBoundingClientRect();
-            if (isStacked()) {
-                startPos = e.clientY;
-                startFirstFr = left.getBoundingClientRect().height / rect.height;
-            } else {
-                startPos = e.clientX;
-                startFirstFr = left.getBoundingClientRect().width / rect.width;
-            }
-            e.preventDefault();
-        });
-        window.addEventListener('mousemove', function (e) {
-            if (!dragging) return;
-            var rect = workspace.getBoundingClientRect();
-            var next, clamped;
-            if (isStacked()) {
-                next = startFirstFr + (e.clientY - startPos) / rect.height;
-                clamped = Math.min(0.78, Math.max(0.22, next));
-            } else {
-                next = startFirstFr + (e.clientX - startPos) / rect.width;
-                clamped = Math.min(0.78, Math.max(0.22, next));
-            }
-            left.style.flex = '1 1 ' + Math.round(clamped * 100) + '%';
-            right.style.flex = '1 1 ' + Math.round((1 - clamped) * 100) + '%';
-        });
-        window.addEventListener('mouseup', function () {
-            if (!dragging) return;
-            dragging = false;
-            el.gutter.classList.remove('is-dragging');
-        });
-    })();
-
-    var layoutResizeTimer;
-    window.addEventListener('resize', function () {
-        if (getLayoutMode() !== LAYOUT_DYNAMIC) {
-            return;
-        }
-        clearTimeout(layoutResizeTimer);
-        layoutResizeTimer = setTimeout(applyLayout, 80);
-    });
-
-    ensureLayoutDefault();
-    applyLayout();
     loadKeys();
     updateToolbar();
-    renderPreview('');
 })();
     </script>
 </body>

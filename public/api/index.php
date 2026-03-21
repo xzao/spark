@@ -34,8 +34,8 @@ function keys(): void {
         respond(200, ['keys' => []]);
     }
     $keys = [];
-    foreach (glob(SPARKS . '/*.md') ?: [] as $path) {
-        $base = basename($path, '.md');
+    foreach (glob(SPARKS . '/*.spk') ?: [] as $path) {
+        $base = basename($path, '.spk');
         if (preg_match('/^[a-zA-Z0-9_\-]+$/', $base)) {
             $keys[] = $base;
         }
@@ -48,7 +48,7 @@ function read(string $file) {
     if (!file_exists($file)) {
         respond(404, ['error' => 'Not found']);
     }
-    respond(200, file_get_contents($file), 'text/markdown');
+    respond(200, file_get_contents($file), 'text/plain; charset=utf-8');
 }
 
 function respond($code, $body, $contentType = 'application/json') {
@@ -92,7 +92,7 @@ if (!$key || !preg_match('/^[a-zA-Z0-9_\-]+$/', $key)) {
 }
 
 # set file
-$file = SPARKS . '/' . $key . '.md';
+$file = SPARKS . '/' . $key . '.spk';
 
 # route
 switch ($method) {
