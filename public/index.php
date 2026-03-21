@@ -6,9 +6,9 @@
     <title>Spark</title>
     <style>
         :root {
-            --unifi-blue: #006fff;
-            --unifi-blue-hover: #0056d6;
-            --unifi-blue-dim: rgba(0, 111, 255, 0.1);
+            --accent: #006fff;
+            --accent-hover: #0056d6;
+            --accent-dim: rgba(0, 111, 255, 0.1);
             --bg-root: #e8ebf0;
             --bg-app: #f0f2f5;
             --bg-sidebar: #ffffff;
@@ -74,7 +74,7 @@
             }
         }
 
-        /* UniFi-style top bar (light) */
+        /* Top bar */
         .topbar {
             height: var(--header-h);
             flex-shrink: 0;
@@ -164,7 +164,7 @@
             color: var(--text-primary);
             background: linear-gradient(180deg, #ffffff 0%, #f8f9fb 100%);
             border: 1px solid var(--border-strong);
-            border-left: 2px solid var(--unifi-blue);
+            border-left: 2px solid var(--accent);
             padding-left: 11px;
             box-shadow:
                 0 1px 2px rgba(26, 29, 38, 0.05),
@@ -203,7 +203,7 @@
             min-height: 0;
         }
 
-        /* Sidebar rail (Discord-like structure, light skin) */
+        /* Sidebar */
         .sidebar {
             width: var(--sidebar-w);
             flex-shrink: 0;
@@ -264,7 +264,7 @@
         .sidebar__item.is-active {
             background: var(--bg-active);
             color: var(--text-primary);
-            border-left-color: var(--unifi-blue);
+            border-left-color: var(--accent);
         }
         .sidebar__item-icon {
             width: 18px;
@@ -312,11 +312,11 @@
             cursor: default;
         }
         .btn--primary {
-            background: var(--unifi-blue);
+            background: var(--accent);
             color: #fff;
         }
         .btn--primary:hover:not(:disabled) {
-            background: var(--unifi-blue-hover);
+            background: var(--accent-hover);
         }
         .btn--secondary {
             background: var(--bg-active);
@@ -408,7 +408,7 @@
             font-weight: 600;
         }
 
-        /* Modal overlay — Discord-like */
+        /* Modal overlay */
         .modal-backdrop {
             display: none;
             position: fixed;
@@ -469,8 +469,8 @@
             outline: none;
         }
         .field input:focus {
-            border-color: var(--unifi-blue);
-            box-shadow: 0 0 0 1px var(--unifi-blue);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent);
         }
 
         /* Card toasts — bottom right, shared motion */
@@ -566,8 +566,8 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
         .toast--tone-created .toast__badge {
-            background: var(--unifi-blue-dim);
-            color: var(--unifi-blue);
+            background: var(--accent-dim);
+            color: var(--accent);
             box-shadow: 0 2px 8px rgba(0, 111, 255, 0.08);
         }
         .toast--tone-deleted .toast__badge {
@@ -576,8 +576,8 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
         .toast--tone-info .toast__badge {
-            background: var(--unifi-blue-dim);
-            color: var(--unifi-blue-hover);
+            background: var(--accent-dim);
+            color: var(--accent-hover);
             box-shadow: 0 2px 8px rgba(0, 111, 255, 0.06);
         }
         .toast--tone-err .toast__badge {
