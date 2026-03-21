@@ -4,6 +4,10 @@
 #
 const SPARKS = '/etc/spark/sparks';
 
+if (!is_dir(SPARKS)) {
+    @mkdir(SPARKS, 0755, true);
+}
+
 
 #
 #   function[s]
@@ -23,6 +27,21 @@ function delete(string $file, string $key) {
     }
     unlink($file);
     respond(200, ['ok' => true, 'key' => $key]);
+}
+
+function keys(): void {
+    if (!is_dir(SPARKS)) {
+        respond(200, ['keys' => []]);
+    }
+    $keys = [];
+    foreach (glob(SPARKS . '/*.md') ?: [] as $path) {
+        $base = basename($path, '.md');
+        if (preg_match('/^[a-zA-Z0-9_\-]+$/', $base)) {
+            $keys[] = $base;
+        }
+    }
+    sort($keys, SORT_NATURAL | SORT_FLAG_CASE);
+    respond(200, ['keys' => $keys]);
 }
 
 function read(string $file) {
@@ -58,6 +77,14 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 # set key
 $key = $_GET['key'] ?? null;
+
+# list all spark keys (GET ?list=1)
+if (isset($_GET['list']) && $_GET['list'] === '1') {
+    if ($method !== 'GET') {
+        respond(405, ['error' => 'Method not allowed']);
+    }
+    keys();
+}
 
 # check key
 if (!$key || !preg_match('/^[a-zA-Z0-9_\-]+$/', $key)) {
