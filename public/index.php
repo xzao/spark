@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Spark — UniFi</title>
+    <title>Spark</title>
     <style>
         :root {
             /* UniFi light — clean surfaces, blue accent, sharp corners */
@@ -432,31 +432,174 @@
             box-shadow: 0 0 0 1px var(--unifi-blue);
         }
 
+        /* Card toasts — bottom right, shared motion */
         .toast {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            max-width: 360px;
-            padding: 12px 16px;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-strong);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            max-width: 320px;
+            padding: 14px 18px 14px 16px;
             border-radius: var(--radius);
-            border-left: 3px solid var(--unifi-blue);
+            border: 1px solid var(--border-strong);
             color: var(--text-primary);
             font-size: 13px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            z-index: 200;
-            opacity: 0;
-            transform: translateY(12px);
+            box-shadow:
+                0 2px 6px rgba(0, 0, 0, 0.04),
+                0 12px 32px rgba(0, 0, 0, 0.08);
             pointer-events: none;
-            transition: opacity 0.2s, transform 0.2s;
+            opacity: 0;
+            transform: translateX(calc(100% + 28px)) scale(0.94);
+            transition: none;
         }
         .toast.is-visible {
-            opacity: 1;
-            transform: translateY(0);
             pointer-events: auto;
+            animation: toast-card-snap 0.7s cubic-bezier(0.34, 1.45, 0.45, 1) forwards;
         }
-        .toast--err { border-left-color: var(--danger); }
+        .toast.is-leaving {
+            animation: toast-card-out 0.32s ease-in forwards;
+        }
+        @keyframes toast-card-snap {
+            0% {
+                opacity: 0;
+                transform: translateX(calc(100% + 32px)) scale(0.88);
+            }
+            55% {
+                opacity: 1;
+                transform: translateX(-8px) scale(1.03);
+            }
+            78% {
+                transform: translateX(4px) scale(0.99);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+        @keyframes toast-card-out {
+            to {
+                opacity: 0;
+                transform: translateX(24px) scale(0.96);
+            }
+        }
+
+        /* Tone: mostly neutral surfaces; accent only on left edge + badge */
+        .toast--tone-saved {
+            background: linear-gradient(145deg, #ffffff 0%, #f4f5f7 100%);
+            border-left: 3px solid #a8b5a8;
+        }
+        .toast--tone-created {
+            background: linear-gradient(145deg, #ffffff 0%, #f3f6fb 100%);
+            border-left: 3px solid rgba(0, 111, 255, 0.45);
+        }
+        .toast--tone-deleted {
+            background: linear-gradient(145deg, #ffffff 0%, #f5f4f3 100%);
+            border-left: 3px solid #b8b0a8;
+        }
+        .toast--tone-info {
+            background: linear-gradient(145deg, #ffffff 0%, #f4f6fa 100%);
+            border-left: 3px solid rgba(0, 111, 255, 0.35);
+        }
+        .toast--tone-err {
+            background: linear-gradient(145deg, #ffffff 0%, #faf6f6 100%);
+            border-left: 3px solid rgba(220, 38, 38, 0.55);
+        }
+
+        .toast__badge {
+            flex-shrink: 0;
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: toast-badge-pop 0.55s cubic-bezier(0.34, 1.4, 0.64, 1) 0.12s both;
+            border: 1px solid var(--border-subtle);
+        }
+        .toast--tone-saved .toast__badge {
+            background: #ecefec;
+            color: #4d5c4d;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .toast--tone-created .toast__badge {
+            background: var(--unifi-blue-dim);
+            color: var(--unifi-blue);
+            box-shadow: 0 2px 8px rgba(0, 111, 255, 0.08);
+        }
+        .toast--tone-deleted .toast__badge {
+            background: #f0eeec;
+            color: #5c5652;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .toast--tone-info .toast__badge {
+            background: var(--unifi-blue-dim);
+            color: var(--unifi-blue-hover);
+            box-shadow: 0 2px 8px rgba(0, 111, 255, 0.06);
+        }
+        .toast--tone-err .toast__badge {
+            background: rgba(220, 38, 38, 0.08);
+            color: var(--danger);
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.08);
+        }
+        @keyframes toast-badge-pop {
+            0% { transform: scale(0) rotate(-40deg); }
+            55% { transform: scale(1.12) rotate(6deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        .toast__badge svg {
+            width: 24px;
+            height: 24px;
+        }
+        .toast__check-path {
+            stroke-dasharray: 24;
+            stroke-dashoffset: 24;
+            animation: toast-check-draw 0.38s ease-out 0.35s forwards;
+        }
+        @keyframes toast-check-draw {
+            to { stroke-dashoffset: 0; }
+        }
+        .toast__icon-fade {
+            opacity: 0;
+            animation: toast-icon-fade 0.35s ease-out 0.2s forwards;
+        }
+        @keyframes toast-icon-fade {
+            to { opacity: 1; }
+        }
+        .toast__words {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+        .toast__title {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+        .toast__sub {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.35;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .toast.is-visible {
+                animation: none;
+                opacity: 1;
+                transform: none;
+            }
+            .toast.is-leaving {
+                animation: none;
+                opacity: 0;
+            }
+            .toast__badge { animation: none; transform: none; }
+            .toast__check-path { animation: none; stroke-dashoffset: 0; }
+            .toast__icon-fade { animation: none; opacity: 1; }
+        }
 
     </style>
 </head>
@@ -543,7 +686,7 @@
         </div>
     </div>
 
-    <div class="toast" id="toast" role="status"></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script>
 (function () {
@@ -580,12 +723,91 @@
         return API + '?' + q.toString();
     }
 
-    function toast(msg, isErr) {
-        el.toast.textContent = msg;
-        el.toast.classList.toggle('toast--err', !!isErr);
-        el.toast.classList.add('is-visible');
+    var TOAST_ICONS = {
+        check: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path class="toast__check-path" d="M6 12.5l4 4 8-9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        plus: '<svg class="toast__icon-fade" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+        trash: '<svg class="toast__icon-fade" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        info: '<svg class="toast__icon-fade" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 16v-5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+        alert: '<svg class="toast__icon-fade" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    };
+
+    function toast(msg, isErr, opts) {
+        opts = opts || {};
         clearTimeout(toast._t);
-        toast._t = setTimeout(function () { el.toast.classList.remove('is-visible'); }, 3800);
+        clearTimeout(toast._leaveT);
+        el.toast.className = 'toast';
+
+        var variant = opts.variant;
+        if (opts.success) {
+            variant = 'saved';
+        }
+        if (!variant && isErr) {
+            variant = 'error';
+        }
+        if (!variant) {
+            variant = 'info';
+        }
+
+        var title;
+        var sub;
+        var toneCls;
+        var iconHtml;
+        var dismissMs = 3000;
+
+        if (variant === 'saved') {
+            title = 'Saved';
+            sub = opts.sub || 'Spark updated on disk';
+            toneCls = 'toast--tone-saved';
+            iconHtml = TOAST_ICONS.check;
+        } else if (variant === 'created') {
+            title = opts.title || msg || 'Created';
+            sub = opts.sub || 'Spark saved to disk';
+            toneCls = 'toast--tone-created';
+            iconHtml = TOAST_ICONS.plus;
+        } else if (variant === 'deleted') {
+            title = opts.title || msg || 'Deleted';
+            sub = opts.sub || 'Spark removed from disk';
+            toneCls = 'toast--tone-deleted';
+            iconHtml = TOAST_ICONS.trash;
+        } else if (variant === 'error') {
+            title = opts.title || 'Something went wrong';
+            sub = msg || '';
+            toneCls = 'toast--tone-err';
+            iconHtml = TOAST_ICONS.alert;
+            dismissMs = 4500;
+        } else {
+            title = msg || 'Notice';
+            sub = opts.sub || '';
+            toneCls = 'toast--tone-info';
+            iconHtml = TOAST_ICONS.info;
+        }
+
+        var subPart = sub
+            ? '<span class="toast__sub">' + escapeHtml(String(sub)) + '</span>'
+            : '';
+        el.toast.innerHTML =
+            '<span class="toast__badge" aria-hidden="true">' +
+            iconHtml +
+            '</span><span class="toast__words"><span class="toast__title">' +
+            escapeHtml(String(title)) +
+            '</span>' +
+            subPart +
+            '</span>';
+
+        el.toast.classList.add(toneCls);
+        el.toast.setAttribute('aria-label', title + (sub ? '. ' + sub : ''));
+
+        void el.toast.offsetWidth;
+        el.toast.classList.add('is-visible');
+        toast._t = setTimeout(function () {
+            el.toast.classList.add('is-leaving');
+            toast._leaveT = setTimeout(function () {
+                el.toast.classList.remove('is-visible', 'is-leaving');
+                el.toast.className = 'toast';
+                el.toast.innerHTML = '';
+                el.toast.removeAttribute('aria-label');
+            }, 320);
+        }, dismissMs);
     }
 
     function setDirty(v) {
@@ -734,7 +956,7 @@
         }
         lastSaved = body;
         setDirty(false);
-        toast('Saved');
+        toast('Saved', false, { success: true });
         await loadKeys();
     }
 
@@ -751,7 +973,7 @@
         }
         await loadKeys();
         await selectKey(key, { skipConfirm: true });
-        toast('Spark created');
+        toast('Spark created', false, { variant: 'created' });
         return true;
     }
 
@@ -789,7 +1011,7 @@
         setHashForKey(null);
         updateToolbar();
         highlightList();
-        toast('Deleted');
+        toast('Deleted', false, { variant: 'deleted' });
         await loadKeys();
     }
 
