@@ -682,6 +682,10 @@
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
                     </button>
                     <span class="action-group__sep" aria-hidden="true"></span>
+                    <button type="button" class="icon-btn" id="btn-rename" title="Rename spark" aria-label="Rename spark" disabled>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    </button>
+                    <span class="action-group__sep" aria-hidden="true"></span>
                     <button type="button" class="icon-btn" id="btn-delete" title="Delete spark" aria-label="Delete spark" disabled>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>
                     </button>
@@ -729,6 +733,23 @@
         </div>
     </div>
 
+    <div class="modal-backdrop" id="modal-rename" role="dialog" aria-modal="true" aria-labelledby="modal-rename-title">
+        <div class="modal">
+            <div class="modal__head" id="modal-rename-title">Rename spark</div>
+            <div class="modal__body">
+                <p>Creates a new spark with the name below (and your current editor text), then removes <strong id="rename-old-key" style="color:var(--text-primary)"></strong>. Same rules as new sparks: letters, numbers, <code>_</code> and <code>-</code> only.</p>
+                <div class="field">
+                    <label for="rename-key-input">New key</label>
+                    <input type="text" id="rename-key-input" autocomplete="off" placeholder="e.g. product-idea-02">
+                </div>
+            </div>
+            <div class="modal__foot">
+                <button type="button" class="btn btn--secondary" id="modal-rename-cancel">Cancel</button>
+                <button type="button" class="btn btn--primary" id="modal-rename-confirm">Rename</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-backdrop" id="modal-delete" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
         <div class="modal">
             <div class="modal__head" id="modal-delete-title">Delete spark</div>
@@ -756,6 +777,7 @@
         toolbarLabel: document.getElementById('toolbar-label'),
         btnSave: document.getElementById('btn-save'),
         btnDelete: document.getElementById('btn-delete'),
+        btnRename: document.getElementById('btn-rename'),
         btnReload: document.getElementById('btn-reload'),
         btnNew: document.getElementById('btn-new'),
         workspace: document.getElementById('workspace'),
@@ -764,6 +786,11 @@
         newKeyInput: document.getElementById('new-key-input'),
         modalNewCancel: document.getElementById('modal-new-cancel'),
         modalNewCreate: document.getElementById('modal-new-create'),
+        modalRename: document.getElementById('modal-rename'),
+        renameOldKey: document.getElementById('rename-old-key'),
+        renameKeyInput: document.getElementById('rename-key-input'),
+        modalRenameCancel: document.getElementById('modal-rename-cancel'),
+        modalRenameConfirm: document.getElementById('modal-rename-confirm'),
         modalDelete: document.getElementById('modal-delete'),
         deleteKeyName: document.getElementById('delete-key-name'),
         modalDeleteCancel: document.getElementById('modal-delete-cancel'),
@@ -816,6 +843,7 @@
         info: '<svg class="toast__icon-fade" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 16v-5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
         alert: '<svg class="toast__icon-fade" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
         reload: '<svg class="toast__icon-fade" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 16h5v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        pencil: '<svg class="toast__icon-fade" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     };
 
     function toast(msg, isErr, opts) {
@@ -861,6 +889,11 @@
             sub = opts.sub || '';
             toneCls = 'toast--tone-info';
             iconHtml = TOAST_ICONS.reload;
+        } else if (variant === 'renamed') {
+            title = opts.title || msg || 'Renamed';
+            sub = opts.sub || 'Spark key updated';
+            toneCls = 'toast--tone-created';
+            iconHtml = TOAST_ICONS.pencil;
         } else if (variant === 'error') {
             title = opts.title || 'Something went wrong';
             sub = msg || '';
@@ -911,6 +944,7 @@
         if (!currentKey) {
             el.toolbarLabel.innerHTML = '<span class="doc-chip doc-chip--empty">No document selected</span>';
             el.btnDelete.disabled = true;
+            el.btnRename.disabled = true;
             el.btnReload.disabled = true;
             el.workspace.hidden = true;
             el.workspaceEmpty.hidden = false;
@@ -918,6 +952,7 @@
         }
         el.toolbarLabel.innerHTML = '<span class="doc-chip doc-chip--open">' + escapeHtml(currentKey) + '</span>';
         el.btnDelete.disabled = false;
+        el.btnRename.disabled = false;
         el.btnReload.disabled = false;
         el.workspace.hidden = false;
         el.workspaceEmpty.hidden = true;
@@ -1074,6 +1109,60 @@
         return true;
     }
 
+    /**
+     * Rename = POST new key with current editor body, then DELETE old key (no rename API).
+     */
+    async function renameSparkTo(newKey) {
+        const oldKey = currentKey;
+        if (!oldKey) {
+            return false;
+        }
+        if (newKey === oldKey) {
+            toast('Enter a different key than the current one', true);
+            return false;
+        }
+        const body = el.editor.value;
+        const cr = await fetch(apiUrl({ key: newKey }), {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+            body: body,
+        });
+        const cdata = await cr.json().catch(function () { return {}; });
+        if (!cr.ok) {
+            toast(cdata.error || 'Could not create spark with that name', true);
+            return false;
+        }
+        const dr = await fetch(apiUrl({ key: oldKey }), { method: 'DELETE' });
+        const ddata = await dr.json().catch(function () { return {}; });
+        if (!dr.ok) {
+            toast(
+                ddata.error || 'Old spark could not be removed — both keys may exist now',
+                true,
+            );
+            await loadKeys();
+            currentKey = newKey;
+            lastSaved = body;
+            setDirty(false);
+            setHashForKey(newKey);
+            updateToolbar();
+            highlightList();
+            return false;
+        }
+        currentKey = newKey;
+        lastSaved = body;
+        setDirty(false);
+        setHashForKey(newKey);
+        updateToolbar();
+        highlightList();
+        await loadKeys();
+        toast('', false, {
+            variant: 'renamed',
+            title: 'Renamed',
+            sub: oldKey + ' → ' + newKey,
+        });
+        return true;
+    }
+
     function openModalNew() {
         el.newKeyInput.value = '';
         el.modalNew.classList.add('is-open');
@@ -1090,6 +1179,19 @@
     }
     function closeModalDelete() {
         el.modalDelete.classList.remove('is-open');
+    }
+
+    function openModalRename() {
+        if (!currentKey) return;
+        el.renameOldKey.textContent = currentKey;
+        el.renameKeyInput.value = currentKey;
+        el.modalRename.classList.add('is-open');
+        el.renameKeyInput.focus();
+        el.renameKeyInput.select();
+    }
+
+    function closeModalRename() {
+        el.modalRename.classList.remove('is-open');
     }
 
     async function confirmDelete() {
@@ -1136,6 +1238,7 @@
         }
     });
     el.btnDelete.addEventListener('click', openModalDelete);
+    el.btnRename.addEventListener('click', openModalRename);
     el.btnNew.addEventListener('click', openModalNew);
     el.modalNewCancel.addEventListener('click', closeModalNew);
     el.modalNew.addEventListener('click', function (e) {
@@ -1160,6 +1263,28 @@
     });
     el.modalDeleteConfirm.addEventListener('click', confirmDelete);
 
+    el.modalRenameCancel.addEventListener('click', closeModalRename);
+    el.modalRename.addEventListener('click', function (e) {
+        if (e.target === el.modalRename) closeModalRename();
+    });
+    el.modalRenameConfirm.addEventListener('click', async function () {
+        const newKey = el.renameKeyInput.value.trim();
+        if (!KEY_RE.test(newKey)) {
+            toast('Invalid key: use letters, numbers, _ and - only', true);
+            return;
+        }
+        el.modalRenameConfirm.disabled = true;
+        try {
+            const ok = await renameSparkTo(newKey);
+            if (ok) closeModalRename();
+        } finally {
+            el.modalRenameConfirm.disabled = false;
+        }
+    });
+    el.renameKeyInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') el.modalRenameConfirm.click();
+    });
+
     window.addEventListener('keydown', function (e) {
         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
             e.preventDefault();
@@ -1168,6 +1293,7 @@
         }
         if (e.key === 'Escape') {
             closeModalNew();
+            closeModalRename();
             closeModalDelete();
         }
     });
