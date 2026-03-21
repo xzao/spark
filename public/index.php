@@ -615,6 +615,28 @@
         });
     }
 
+    function parseHashKey() {
+        var raw = window.location.hash.replace(/^#/, '');
+        if (!raw) {
+            return null;
+        }
+        try {
+            raw = decodeURIComponent(raw);
+        } catch (e) {
+            return null;
+        }
+        return KEY_RE.test(raw) ? raw : null;
+    }
+
+    function setHashForKey(key) {
+        var base = window.location.pathname + window.location.search;
+        if (key) {
+            history.replaceState(null, '', base + '#' + encodeURIComponent(key));
+        } else {
+            history.replaceState(null, '', base);
+        }
+    }
+
     async function loadKeys() {
         const r = await fetch(apiUrl({ list: '1' }));
         const data = await r.json().catch(function () { return {}; });
@@ -655,14 +677,19 @@
         if (!key) {
             el.editor.value = '';
             setDirty(false);
+            setHashForKey(null);
             return;
         }
 
         const r = await fetch(apiUrl({ key: key }));
         if (r.status === 404) {
+            currentKey = null;
             el.editor.value = '';
             lastSaved = '';
             setDirty(false);
+            setHashForKey(null);
+            updateToolbar();
+            highlightList();
             toast('Spark not found', true);
             await loadKeys();
             return;
@@ -676,6 +703,7 @@
         el.editor.value = text;
         lastSaved = text;
         setDirty(false);
+        setHashForKey(key);
     }
 
     async function save() {
@@ -758,6 +786,7 @@
         currentKey = null;
         el.editor.value = '';
         setDirty(false);
+        setHashForKey(null);
         updateToolbar();
         highlightList();
         toast('Deleted');
@@ -811,8 +840,29 @@
         }
     });
 
-    loadKeys();
-    updateToolbar();
+    window.addEventListener('beforeunload', function (e) {
+        if (!dirty) {
+            return;
+        }
+        e.preventDefault();
+        e.returnValue = '';
+    });
+
+    window.addEventListener('hashchange', function () {
+        var h = parseHashKey();
+        if (h === currentKey || (h === null && currentKey === null)) {
+            return;
+        }
+        selectKey(h, {});
+    });
+
+    loadKeys().then(function () {
+        updateToolbar();
+        var h = parseHashKey();
+        if (h) {
+            return selectKey(h, { skipConfirm: true });
+        }
+    });
 })();
     </script>
 </body>
