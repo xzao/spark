@@ -193,6 +193,21 @@
             opacity: 0.35;
             cursor: default;
         }
+        .icon-btn.is-busy {
+            pointer-events: none;
+            opacity: 0.85;
+        }
+        .icon-btn.is-busy svg {
+            animation: icon-btn-spin 0.65s linear infinite;
+        }
+        @keyframes icon-btn-spin {
+            to { transform: rotate(360deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .icon-btn.is-busy svg {
+                animation: none;
+            }
+        }
         .icon-btn svg {
             flex-shrink: 0;
         }
@@ -800,6 +815,7 @@
         trash: '<svg class="toast__icon-fade" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
         info: '<svg class="toast__icon-fade" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 16v-5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
         alert: '<svg class="toast__icon-fade" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        reload: '<svg class="toast__icon-fade" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 16h5v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     };
 
     function toast(msg, isErr, opts) {
@@ -840,6 +856,11 @@
             sub = opts.sub || 'Spark removed from disk';
             toneCls = 'toast--tone-deleted';
             iconHtml = TOAST_ICONS.trash;
+        } else if (variant === 'refreshed') {
+            title = opts.title || msg || 'Refreshed';
+            sub = opts.sub || '';
+            toneCls = 'toast--tone-info';
+            iconHtml = TOAST_ICONS.reload;
         } else if (variant === 'error') {
             title = opts.title || 'Something went wrong';
             sub = msg || '';
@@ -961,7 +982,9 @@
     async function selectKey(key, opts) {
         opts = opts || {};
         if (dirty && !opts.skipConfirm) {
-            if (!confirm('Discard unsaved changes?')) return;
+            if (!confirm('Discard unsaved changes?')) {
+                return false;
+            }
         }
         currentKey = key;
         dirty = false;
@@ -973,7 +996,7 @@
             el.editor.value = '';
             setDirty(false);
             setHashForKey(null);
-            return;
+            return true;
         }
 
         const r = await fetch(apiUrl({ key: key }));
@@ -987,18 +1010,19 @@
             highlightList();
             toast('Spark not found', true);
             await loadKeys();
-            return;
+            return false;
         }
         if (!r.ok) {
             const err = await r.json().catch(function () { return {}; });
             toast(err.error || 'Failed to load', true);
-            return;
+            return false;
         }
         const text = await r.text();
         el.editor.value = text;
         lastSaved = text;
         setDirty(false);
         setHashForKey(key);
+        return true;
     }
 
     async function save() {
@@ -1093,10 +1117,23 @@
     });
 
     el.btnSave.addEventListener('click', save);
-    el.btnReload.addEventListener('click', function () {
+    el.btnReload.addEventListener('click', async function () {
         if (!currentKey) return;
         if (dirty && !confirm('Reload from disk? Unsaved changes will be lost.')) return;
-        selectKey(currentKey, { skipConfirm: true });
+        el.btnReload.classList.add('is-busy');
+        el.btnReload.setAttribute('aria-busy', 'true');
+        try {
+            var ok = await selectKey(currentKey, { skipConfirm: true });
+            if (ok) {
+                toast('Reloaded from disk', false, {
+                    variant: 'refreshed',
+                    sub: 'Editor now matches the file on disk',
+                });
+            }
+        } finally {
+            el.btnReload.classList.remove('is-busy');
+            el.btnReload.removeAttribute('aria-busy');
+        }
     });
     el.btnDelete.addEventListener('click', openModalDelete);
     el.btnNew.addEventListener('click', openModalNew);
