@@ -1116,6 +1116,7 @@
                 return false;
             }
         }
+        clearAutosaveTimer();
         currentKey = key;
         dirty = false;
         lastSaved = '';
@@ -1155,7 +1156,33 @@
         return true;
     }
 
-    async function save() {
+    var AUTOSAVE_DEBOUNCE_MS = 550;
+    var autosaveTimer = null;
+
+    function clearAutosaveTimer() {
+        if (autosaveTimer !== null) {
+            clearTimeout(autosaveTimer);
+            autosaveTimer = null;
+        }
+    }
+
+    function scheduleAutosave() {
+        clearAutosaveTimer();
+        if (!currentKey || !dirty) {
+            return;
+        }
+        autosaveTimer = window.setTimeout(function () {
+            autosaveTimer = null;
+            if (!currentKey || !dirty) {
+                return;
+            }
+            save({ silent: true, skipListRefresh: true });
+        }, AUTOSAVE_DEBOUNCE_MS);
+    }
+
+    async function save(opts) {
+        opts = opts || {};
+        clearAutosaveTimer();
         if (!currentKey) return;
         const body = el.editor.value;
         const r = await fetch(apiUrl({ key: currentKey }), {
@@ -1182,9 +1209,16 @@
             }
         }
         lastSaved = body;
-        setDirty(false);
-        toast('Saved', false, { success: true });
-        await loadKeys();
+        setDirty(el.editor.value !== body);
+        if (!opts.silent) {
+            toast('Saved', false, { success: true });
+        }
+        if (!opts.skipListRefresh) {
+            await loadKeys();
+        }
+        if (dirty) {
+            scheduleAutosave();
+        }
     }
 
     async function createSpark(key) {
@@ -1208,6 +1242,7 @@
      * Rename = POST new key with current editor body, then DELETE old key (no rename API).
      */
     async function renameSparkTo(newKey) {
+        clearAutosaveTimer();
         const oldKey = currentKey;
         if (!oldKey) {
             return false;
@@ -1291,6 +1326,7 @@
 
     async function confirmDelete() {
         if (!currentKey) return;
+        clearAutosaveTimer();
         const key = currentKey;
         const r = await fetch(apiUrl({ key: key }), { method: 'DELETE' });
         const data = await r.json().catch(function () { return {}; });
@@ -1311,12 +1347,18 @@
 
     el.editor.addEventListener('input', function () {
         setDirty(el.editor.value !== lastSaved);
+        if (dirty) {
+            scheduleAutosave();
+        } else {
+            clearAutosaveTimer();
+        }
     });
 
     el.btnSave.addEventListener('click', save);
     el.btnReload.addEventListener('click', async function () {
         if (!currentKey) return;
         if (dirty && !confirm('Reload from disk? Unsaved changes will be lost.')) return;
+        clearAutosaveTimer();
         el.btnReload.classList.add('is-busy');
         el.btnReload.setAttribute('aria-busy', 'true');
         try {
