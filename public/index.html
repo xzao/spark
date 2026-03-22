@@ -229,12 +229,67 @@
             min-height: 0;
         }
         .sidebar__head {
-            padding: 12px 12px 8px;
+            padding: 0;
+        }
+        .sidebar__head--toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            padding: 10px 8px 8px 12px;
+        }
+        .sidebar__head-label {
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.06em;
             color: var(--text-muted);
+            min-width: 0;
+        }
+        .sidebar__collapse-btn {
+            flex-shrink: 0;
+        }
+        .sidebar__collapse-btn .sidebar__icon--expand {
+            display: none;
+        }
+        .body--sidebar-collapsed .sidebar__collapse-btn .sidebar__icon--collapse {
+            display: none;
+        }
+        .body--sidebar-collapsed .sidebar__collapse-btn .sidebar__icon--expand {
+            display: block;
+        }
+        .sidebar {
+            transition: width 0.22s ease, min-width 0.22s ease;
+        }
+        .body--sidebar-collapsed .sidebar {
+            width: 44px;
+            min-width: 44px;
+        }
+        .body--sidebar-collapsed .sidebar__head--toolbar {
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 8px 4px;
+            gap: 0;
+        }
+        .body--sidebar-collapsed .sidebar__head-label {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        .body--sidebar-collapsed .sidebar__list,
+        .body--sidebar-collapsed .sidebar__foot {
+            display: none !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .sidebar {
+                transition: none;
+            }
         }
         .sidebar__list {
             flex: 1;
@@ -693,9 +748,15 @@
             </div>
             </div>
         </header>
-        <div class="body">
+        <div class="body" id="app-body">
             <aside class="sidebar" aria-label="Sparks list">
-                <div class="sidebar__head">Sparks</div>
+                <div class="sidebar__head sidebar__head--toolbar">
+                    <span class="sidebar__head-label" id="sidebar-head-label">Sparks</span>
+                    <button type="button" class="icon-btn sidebar__collapse-btn" id="btn-sidebar-collapse" title="Collapse sparks list" aria-expanded="true" aria-controls="spark-list">
+                        <svg class="sidebar__icon--collapse" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 19l-7-7 7-7M18 19l-7-7 7-7"/></svg>
+                        <svg class="sidebar__icon--expand" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 5l7 7-7 7M6 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
                 <div class="sidebar__list sidebar__list--boot" id="spark-list"></div>
                 <div class="sidebar__foot">
                     <button type="button" class="btn btn--secondary" id="btn-new" style="width:100%">+ New spark</button>
@@ -769,10 +830,13 @@
 (function () {
     const API = 'api/index.php';
     const KEY_RE = /^[a-zA-Z0-9_\-]+$/;
+    const LS_SIDEBAR_COLLAPSED = 'spark.sidebarCollapsed';
 
     const el = {
         app: document.getElementById('app-root'),
+        body: document.getElementById('app-body'),
         list: document.getElementById('spark-list'),
+        btnSidebarCollapse: document.getElementById('btn-sidebar-collapse'),
         editor: document.getElementById('editor'),
         toolbarLabel: document.getElementById('toolbar-label'),
         btnSave: document.getElementById('btn-save'),
@@ -826,6 +890,37 @@
     }
 
     revealAppShell();
+
+    function readSidebarCollapsed() {
+        try {
+            return localStorage.getItem(LS_SIDEBAR_COLLAPSED) === '1';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function writeSidebarCollapsed(collapsed) {
+        try {
+            localStorage.setItem(LS_SIDEBAR_COLLAPSED, collapsed ? '1' : '0');
+        } catch (e) { /* ignore quota / private mode */ }
+    }
+
+    function applySidebarCollapsed(collapsed) {
+        el.body.classList.toggle('body--sidebar-collapsed', collapsed);
+        var expanded = !collapsed;
+        el.btnSidebarCollapse.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        var t = expanded ? 'Collapse sparks list' : 'Expand sparks list';
+        el.btnSidebarCollapse.title = t;
+        el.btnSidebarCollapse.setAttribute('aria-label', t);
+    }
+
+    applySidebarCollapsed(readSidebarCollapsed());
+
+    el.btnSidebarCollapse.addEventListener('click', function () {
+        var next = !el.body.classList.contains('body--sidebar-collapsed');
+        writeSidebarCollapsed(next);
+        applySidebarCollapsed(next);
+    });
 
     let currentKey = null;
     let lastSaved = '';
