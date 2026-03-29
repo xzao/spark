@@ -428,15 +428,32 @@
             min-height: 0;
         }
 
-        .pane__label {
+        .pane__head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
             padding: 6px 12px;
+            background: var(--bg-input);
+            border-bottom: 1px solid var(--border-subtle);
+            min-width: 0;
+        }
+        .pane__head-title {
+            flex-shrink: 0;
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: var(--text-muted);
-            background: var(--bg-input);
-            border-bottom: 1px solid var(--border-subtle);
+        }
+        .pane__head-doc {
+            min-width: 0;
+            display: flex;
+            justify-content: flex-end;
+            flex: 1;
+        }
+        .pane__head-doc .doc-chip {
+            max-width: 100%;
         }
 
         #editor {
@@ -724,9 +741,6 @@
                 <span class="topbar__title">Spark</span>
             </div>
             <div class="topbar__rail">
-            <div id="toolbar-label" aria-live="polite">
-                <span class="doc-chip doc-chip--empty">No document selected</span>
-            </div>
             <div class="topbar__actions" role="toolbar" aria-label="Document actions">
                 <div class="action-group">
                     <button type="button" class="icon-btn" id="btn-reload" title="Reload from disk" aria-label="Reload from disk">
@@ -769,7 +783,10 @@
                 </div>
                 <div class="workspace" id="workspace">
                     <div class="pane pane--editor">
-                        <div class="pane__label">Editor</div>
+                        <div class="pane__head">
+                            <span class="pane__head-title">Editor</span>
+                            <div id="editor-doc-label" class="pane__head-doc" aria-live="polite"></div>
+                        </div>
                         <textarea id="editor" spellcheck="false" placeholder="Write your spark here…&#10;&#10;Plain text (.spk)."></textarea>
                     </div>
                 </div>
@@ -831,6 +848,8 @@
     const API = 'api/index.php';
     const KEY_RE = /^[a-zA-Z0-9_\-]+$/;
     const LS_SIDEBAR_COLLAPSED = 'spark.sidebarCollapsed';
+    /** Viewports this wide or narrower start with the sparks rail collapsed; choosing a spark keeps it collapsed. */
+    const MQ_SIDEBAR_NARROW = '(max-width: 1000px)';
 
     const el = {
         app: document.getElementById('app-root'),
@@ -838,7 +857,7 @@
         list: document.getElementById('spark-list'),
         btnSidebarCollapse: document.getElementById('btn-sidebar-collapse'),
         editor: document.getElementById('editor'),
-        toolbarLabel: document.getElementById('toolbar-label'),
+        editorDocLabel: document.getElementById('editor-doc-label'),
         btnSave: document.getElementById('btn-save'),
         btnDelete: document.getElementById('btn-delete'),
         btnRename: document.getElementById('btn-rename'),
@@ -914,7 +933,21 @@
         el.btnSidebarCollapse.setAttribute('aria-label', t);
     }
 
-    applySidebarCollapsed(readSidebarCollapsed());
+    function isSidebarNarrowLayout() {
+        return window.matchMedia(MQ_SIDEBAR_NARROW).matches;
+    }
+
+    function collapseSidebarIfNarrow() {
+        if (isSidebarNarrowLayout()) {
+            applySidebarCollapsed(true);
+        }
+    }
+
+    if (isSidebarNarrowLayout()) {
+        applySidebarCollapsed(true);
+    } else {
+        applySidebarCollapsed(readSidebarCollapsed());
+    }
 
     el.btnSidebarCollapse.addEventListener('click', function () {
         var next = !el.body.classList.contains('body--sidebar-collapsed');
@@ -1037,7 +1070,7 @@
 
     function updateToolbar() {
         if (!currentKey) {
-            el.toolbarLabel.innerHTML = '<span class="doc-chip doc-chip--empty">No document selected</span>';
+            el.editorDocLabel.innerHTML = '';
             el.btnDelete.disabled = true;
             el.btnRename.disabled = true;
             el.btnReload.disabled = true;
@@ -1045,7 +1078,7 @@
             el.workspaceEmpty.hidden = false;
             return;
         }
-        el.toolbarLabel.innerHTML = '<span class="doc-chip doc-chip--open">' + escapeHtml(currentKey) + '</span>';
+        el.editorDocLabel.innerHTML = '<span class="doc-chip doc-chip--open">' + escapeHtml(currentKey) + '</span>';
         el.btnDelete.disabled = false;
         el.btnRename.disabled = false;
         el.btnReload.disabled = false;
@@ -1153,6 +1186,7 @@
         lastSaved = text;
         setDirty(false);
         setHashForKey(key);
+        collapseSidebarIfNarrow();
         return true;
     }
 
